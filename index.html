@@ -528,7 +528,7 @@
     closeDay(); updateMonthBar(); renderDays(); calc(); saveStore();
   }
   function updateMonthBar(){
-    $('#m-label').textContent=MONTHS[aM]+' '+aY;
+    $('#m-label').textContent=MONTHS[aM].slice(0,3).replace(/^./,c=>c.toUpperCase())+' '+aY;
     const t=$('#m-tag'); if(cmpMonth===0){t.className='mtag now';t.textContent='atual';} else if(cmpMonth>0){t.className='mtag future';t.textContent='planejar';} else {t.className='mtag past';t.textContent='histórico';}
     $('#prog-month').textContent=MONTHS[aM]+' '+aY; $('#cal-month').textContent=MONTHS[aM]+' de '+aY;
     $('#cfg-month').textContent=MONTHS[aM]+' '+aY; $('#hoje-data').textContent=(cmpMonth===0?TODAY+' de '+MONTHS[aM]:MONTHS[aM]+' '+aY);
