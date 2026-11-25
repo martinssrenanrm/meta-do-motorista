@@ -17,7 +17,7 @@
 <body>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap">
 <style>
-  /* App mobile de abas: Hoje (lançar o dia) · Mês (calendário + caixinhas) · Plano (metas e real) · Ajustes (config). */
+  /* App mobile de abas + filtro de mês no topo. Hoje · Mês · Plano · Ajustes. Cada mês guarda seus próprios dados. */
   :root{
     --bg:#f3f5f6; --surface:#ffffff; --surface-2:#eef1f4; --border:#e3e7ec;
     --fg:#111820; --muted:#59646f; --faint:#8893a0;
@@ -57,27 +57,41 @@
   .app{max-width:540px;margin:0 auto;
     padding-left:max(16px,env(safe-area-inset-left,0px));
     padding-right:max(16px,env(safe-area-inset-right,0px));
-    padding-block:20px calc(82px + env(safe-area-inset-bottom,0px))}
+    padding-block:18px calc(82px + env(safe-area-inset-bottom,0px))}
 
-  header{display:flex;align-items:center;gap:11px;margin-bottom:18px}
-  .mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,var(--accent),var(--accent-2));
-    display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:var(--sh-sm);flex:none}
+  header{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+  .mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(145deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:var(--sh-sm);flex:none}
   .mark svg{width:22px;height:22px}
   h1{font-family:var(--display);font-size:1.3rem;font-weight:700;margin:0;letter-spacing:-.02em}
-  header p{margin:0;color:var(--muted);font-size:.8rem}
   .grow{flex:1}
-  .ghost{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:11px;
-    padding:9px 12px;font:600 .8rem var(--body);cursor:pointer}
+  .ghost{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:11px;padding:9px 12px;font:600 .8rem var(--body);cursor:pointer}
   .ghost:hover{color:var(--fg);border-color:var(--accent)}
   .ghost:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+  /* barra de mês */
+  .monthbar{display:flex;align-items:center;gap:8px;margin-bottom:16px;position:relative}
+  .mnav{flex:none;width:40px;height:40px;border:1px solid var(--border);background:var(--surface);color:var(--fg);border-radius:12px;font-size:1.3rem;line-height:1;cursor:pointer;box-shadow:var(--sh-sm)}
+  .mnav:hover{border-color:var(--accent);color:var(--accent)}
+  .mcur{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;border:1px solid var(--border);background:var(--surface);border-radius:12px;padding:9px 12px;cursor:pointer;box-shadow:var(--sh-sm)}
+  .mcur:hover{border-color:var(--accent)}
+  .mcur .ml{font-family:var(--display);font-weight:600;font-size:1.02rem;text-transform:capitalize}
+  .mtag{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:3px 7px;border-radius:99px}
+  .mtag.now{background:var(--accent-soft);color:var(--accent)} .mtag.future{background:var(--amber-soft);color:var(--amber)} .mtag.past{background:var(--surface-2);color:var(--muted)}
+  .msheet{position:absolute;top:48px;left:0;right:0;z-index:25;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--sh);padding:7px;max-height:300px;overflow:auto}
+  .mitem{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 11px;border-radius:10px;cursor:pointer;font-size:.9rem}
+  .mitem:hover{background:var(--surface-2)}
+  .mitem.sel{background:var(--accent-soft)}
+  .mitem .mi-l{display:flex;flex-direction:column;gap:1px}
+  .mitem .mi-l b{text-transform:capitalize;font-weight:600}
+  .mitem .mi-l small{color:var(--faint);font-size:.72rem}
+  .mitem .mi-r{font-variant-numeric:tabular-nums;font-weight:700;color:var(--accent)}
+  .msheet .mnew{text-align:center;color:var(--muted);font-weight:600;font-size:.82rem;padding:9px;border-top:1px solid var(--border);margin-top:4px}
 
   .panel{display:flex;flex-direction:column;gap:15px}
   .panel[hidden]{display:none}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--sh);padding:17px}
-  .ct{font-family:var(--display);font-weight:600;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
-    color:var(--faint);margin:0 0 13px;display:flex;align-items:center;gap:8px}
-  .ct .n{display:inline-flex;align-items:center;justify-content:center;min-width:21px;height:21px;border-radius:7px;
-    background:var(--surface-2);color:var(--muted);font-size:.72rem;font-weight:700;padding:0 3px}
+  .ct{font-family:var(--display);font-weight:600;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin:0 0 13px;display:flex;align-items:center;gap:8px}
+  .ct .n{display:inline-flex;align-items:center;justify-content:center;min-width:21px;height:21px;border-radius:7px;background:var(--surface-2);color:var(--muted);font-size:.72rem;font-weight:700;padding:0 3px}
   .ct small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--faint);font-family:var(--body);font-size:.76rem;margin-left:auto}
 
   .field{display:flex;flex-direction:column;gap:5px}
@@ -90,9 +104,11 @@
   .inbox input{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:600 1.05rem var(--body);padding:13px 6px;text-align:right;font-variant-numeric:tabular-nums}
   .inbox input:focus{outline:none}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .two>.field{min-width:0}
   .calc-line{display:flex;justify-content:space-between;align-items:baseline;font-size:.84rem;color:var(--muted);padding:7px 2px;border-top:1px dashed var(--border)}
   .calc-line b{color:var(--fg);font-variant-numeric:tabular-nums;font-weight:600}
   .fixos{display:grid;grid-template-columns:1fr 1fr;gap:9px 12px}
+  .fixos>.fx{min-width:0}
   @media (max-width:420px){.fixos{grid-template-columns:1fr}}
   .fx label{font-size:.77rem;color:var(--muted);display:block;margin-bottom:3px}
   .fx .inbox input{padding:9px 6px;font-size:.95rem}
@@ -102,12 +118,12 @@
   .pklab{font-size:.85rem;font-weight:500;margin-bottom:6px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
   .pklab small{color:var(--faint);font-weight:400;font-size:.75rem}
   .pkgrid{display:grid;grid-template-columns:1fr 1.2fr auto;gap:8px;align-items:center}
+  .pkgrid>*{min-width:0}
   @media (max-width:440px){.pkgrid{grid-template-columns:1fr 1fr}.pkout{grid-column:1/-1}}
   .inbox.sm input{padding:9px 6px;font-size:.92rem}
   .inbox.sm .pre,.inbox.sm .suf{padding:0 8px;font-size:.78rem}
   .pkout{font:600 .85rem var(--body);color:var(--accent);background:var(--accent-soft);border-radius:9px;padding:9px 10px;text-align:center;white-space:nowrap;font-variant-numeric:tabular-nums}
 
-  /* progresso */
   .prog-top{display:flex;justify-content:space-between;align-items:flex-end;margin:0 0 8px}
   .prog-pct{font-family:var(--display);font-weight:700;font-size:2.2rem;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
   .prog-right{text-align:right;font-size:.82rem;color:var(--muted)}
@@ -124,18 +140,16 @@
   .hdot{width:9px;height:9px;border-radius:50%;background:var(--muted);flex:none}
   .hdot.ok{background:var(--accent)} .hdot.bad{background:var(--danger)} .hdot.warn{background:var(--amber)}
 
-  /* form do dia */
   #dayForm .ed-date{font-family:var(--display);font-weight:600;margin-bottom:12px;text-transform:capitalize;font-size:1.02rem}
   .ed-toggle{display:flex;align-items:center;gap:9px;font-size:.9rem;margin-bottom:12px;cursor:pointer;font-weight:500}
   .ed-toggle input{width:18px;height:18px;accent-color:var(--accent)}
   .ed-fields{display:grid;grid-template-columns:1fr 1fr;gap:11px}
   .ed-fields.off{opacity:.4;pointer-events:none}
-  .ed-fields>div,.two>.field,.fixos>.fx,.pkgrid>*,.heroes>.hero{min-width:0}
+  .ed-fields>div{min-width:0}
   .ed-fields label{font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px}
   .ed-readout{margin-top:13px;background:var(--surface-2);border:1px solid var(--border);border-radius:13px;padding:13px}
   .ed-actions{display:flex;justify-content:flex-end;margin-top:12px}
 
-  /* caixinhas */
   .cx{display:flex;flex-direction:column}
   .cx-row{display:flex;justify-content:space-between;align-items:baseline;padding:10px 2px;font-size:.92rem}
   .cx-row+.cx-row{border-top:1px solid var(--border)}
@@ -144,7 +158,6 @@
   .cx-row.total b{color:var(--accent);font-family:var(--display);font-size:1.25rem}
   .cx-row.total .cx-k{color:var(--fg);font-weight:600}
 
-  /* calendário */
   .cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;gap:8px;flex-wrap:wrap}
   .cal-month{font-family:var(--display);font-weight:600;font-size:1.05rem;text-transform:capitalize}
   .presets{display:flex;gap:6px;flex-wrap:wrap}
@@ -178,7 +191,6 @@
   .realnote .rk{color:var(--faint);font-weight:500}
   .realnote .rv{color:var(--accent)} .realnote .rv.bad{color:var(--danger)}
 
-  /* insights */
   .pill{display:inline-flex;align-items:center;gap:7px;padding:6px 13px;border-radius:99px;font:700 .8rem var(--body)}
   .pill .d{width:8px;height:8px;border-radius:50%;background:currentColor}
   .pill.ok{background:var(--accent-soft);color:var(--accent)}
@@ -202,6 +214,7 @@
   .plan-card{background:linear-gradient(160deg,var(--ink-soft),var(--surface) 60%);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:var(--sh)}
   .plan-card .ct{color:var(--ink)} .plan-card .ct .n{background:var(--ink);color:#fff}
   .heroes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .heroes>.hero{min-width:0}
   @media (max-width:420px){.heroes{grid-template-columns:1fr}}
   .hero{border:1px solid var(--border);border-radius:14px;padding:12px;background:var(--surface)}
   .hero .cap{font-size:.7rem;font-weight:600;text-transform:uppercase;color:var(--faint);display:flex;align-items:center;gap:6px}
@@ -219,7 +232,6 @@
   .warn{display:none;background:var(--danger-soft);border:1px solid var(--danger);color:var(--danger);border-radius:14px;padding:13px 15px;font-size:.88rem;font-weight:500}
   .warn.show{display:block}
 
-  /* abas */
   .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:center;background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -2px 18px rgba(0,0,0,.06);
     padding:7px max(10px,env(safe-area-inset-left,0px)) calc(7px + env(safe-area-inset-bottom,0px)) max(10px,env(safe-area-inset-right,0px))}
   .tabbar .inner{display:flex;gap:4px;width:100%;max-width:540px}
@@ -233,19 +245,24 @@
 <div class="app">
   <header>
     <div class="mark" aria-hidden="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 17h14M6.5 17l1.2-5.2A2 2 0 0 1 9.6 10h4.8a2 2 0 0 1 1.9 1.8L17.5 17"/><circle cx="7.5" cy="17.5" r="1.6"/><circle cx="16.5" cy="17.5" r="1.6"/>
-      </svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17h14M6.5 17l1.2-5.2A2 2 0 0 1 9.6 10h4.8a2 2 0 0 1 1.9 1.8L17.5 17"/><circle cx="7.5" cy="17.5" r="1.6"/><circle cx="16.5" cy="17.5" r="1.6"/></svg>
     </div>
-    <div class="grow"><h1>Meta do Motorista</h1><p id="head-sub">—</p></div>
+    <div class="grow"><h1>Meta do Motorista</h1></div>
     <button class="ghost" id="theme" aria-label="Alternar tema">◐</button>
   </header>
 
+  <div class="monthbar">
+    <button class="mnav" id="m-prev" aria-label="Mês anterior">‹</button>
+    <button class="mcur" id="m-pick"><span class="ml" id="m-label">—</span><span class="mtag" id="m-tag"></span></button>
+    <button class="mnav" id="m-next" aria-label="Próximo mês">›</button>
+    <div class="msheet" id="m-list" hidden></div>
+  </div>
+
   <main>
-    <!-- ================= HOJE ================= -->
+    <!-- HOJE -->
     <section class="panel" data-panel="hoje">
       <div class="card">
-        <p class="ct"><span class="n">★</span> Progresso do mês</p>
+        <p class="ct"><span class="n">★</span> Progresso <small id="prog-month"></small></p>
         <div class="prog-top">
           <div class="prog-pct" id="p-pct">0%</div>
           <div class="prog-right"><b id="p-feito">R$ 0</b>de <span id="p-alvo">—</span> faturados</div>
@@ -255,7 +272,6 @@
         <div class="lucro"><span class="k">Lucro no bolso até agora</span><span class="v" id="p-lucro">—<small id="p-lucro-sub"></small></span></div>
         <div class="hline"><span class="hdot" id="h-dot"></span><span id="h-line">—</span></div>
       </div>
-
       <div class="card">
         <p class="ct"><span class="n">▣</span> Fechar o dia <small id="hoje-data"></small></p>
         <span class="hint" style="display:block;margin:-6px 0 12px">Lance o que fez hoje. O resumo com as caixinhas aparece embaixo.</span>
@@ -263,10 +279,10 @@
       </div>
     </section>
 
-    <!-- ================= MÊS ================= -->
+    <!-- MÊS -->
     <section class="panel" data-panel="mes" hidden>
       <div class="card">
-        <p class="ct"><span class="n">▦</span> Caixinhas do mês <small>onde vai o que faturou</small></p>
+        <p class="ct"><span class="n">▦</span> Caixinhas <small>onde vai o que faturou</small></p>
         <div class="cx">
           <div class="cx-row"><span class="cx-k">⛽ Combustível (já gasto)</span><b id="cx-comb">—</b></div>
           <div class="cx-row"><span class="cx-k">🔧 Guardar p/ manutenção</span><b id="cx-manut">—</b></div>
@@ -275,7 +291,6 @@
         </div>
         <span class="hint" id="cx-hint" style="display:block;margin-top:9px"></span>
       </div>
-
       <div class="card">
         <div class="cal-head">
           <span class="cal-month" id="cal-month">—</span>
@@ -296,7 +311,7 @@
       </div>
     </section>
 
-    <!-- ================= PLANO ================= -->
+    <!-- PLANO -->
     <section class="panel" data-panel="plano" hidden>
       <div class="card ins">
         <p class="ct" style="margin-bottom:10px"><span class="n">◎</span> Como você está</p>
@@ -311,6 +326,7 @@
             <tr><td>Ganho / km</td><td class="pl" id="cp-ganho">—</td><td class="rl dash" id="cr-ganho">—</td></tr>
             <tr><td>Ganho / hora</td><td class="pl" id="cp-hora">—</td><td class="rl dash" id="cr-hora">—</td></tr>
             <tr><td>Combustível / L</td><td class="pl" id="cp-preco">—</td><td class="rl dash" id="cr-preco">—</td></tr>
+            <tr><td>Consumo km/L</td><td class="pl" id="cp-cons">—</td><td class="rl dash" id="cr-cons">—</td></tr>
             <tr><td>KM / dia</td><td class="pl" id="cp-km">—</td><td class="rl dash" id="cr-km">—</td></tr>
             <tr><td>Fatura / dia</td><td class="pl" id="cp-fat">—</td><td class="rl dash" id="cr-fat">—</td></tr>
           </tbody>
@@ -334,17 +350,16 @@
       </div>
     </section>
 
-    <!-- ================= AJUSTES ================= -->
+    <!-- AJUSTES -->
     <section class="panel" data-panel="config" hidden>
       <div class="card">
-        <p class="ct"><span class="n">1</span> Sua meta</p>
+        <p class="ct"><span class="n">1</span> Sua meta <small id="cfg-month"></small></p>
         <div class="field">
           <label for="meta">Meta de retirada líquida no mês</label>
           <div class="inbox"><span class="pre">R$</span><input id="meta" type="number" inputmode="decimal" min="0" step="100" value="6000"></div>
-          <span class="hint">O que sobra pra você, já descontados combustível, manutenção e custos fixos.</span>
+          <span class="hint">Vale só pra este mês — cada mês tem a sua meta e seus custos.</span>
         </div>
       </div>
-
       <div class="card">
         <p class="ct"><span class="n">2</span> Ganhos e custos</p>
         <div class="field">
@@ -393,17 +408,20 @@
         </div>
         <div class="calc-line" style="margin-top:11px"><span>Total de custos fixos</span><b id="o-fixos">—</b></div>
       </div>
-
       <div class="card">
         <p class="ct"><span class="n">3</span> Jornada planejada</p>
         <div class="slider-head"><label for="horas">Horas por dia que pretende trabalhar</label><span class="big" id="horas-v">9 h</span></div>
         <input id="horas" type="range" min="1" max="16" step="0.5" value="9">
         <span class="hint">Base pra calcular o R$/hora que você precisa fazer.</span>
       </div>
+      <div class="card">
+        <p class="ct"><span class="n">↺</span> Copiar configuração</p>
+        <span class="hint" style="display:block;margin-bottom:10px">Repete meta, custos e jornada deste mês para o próximo (os dias ficam em branco).</span>
+        <button class="ghost" id="copy-next" style="width:100%;padding:12px">Copiar para o próximo mês ›</button>
+      </div>
     </section>
   </main>
 
-  <!-- form reutilizável do dia -->
   <div id="dayForm" hidden>
     <div class="ed-date" id="ed-date"></div>
     <label class="ed-toggle" id="ed-toggle-row"><input type="checkbox" id="ed-work"> Vou trabalhar nesse dia</label>
@@ -411,24 +429,19 @@
       <div><label for="ed-fat">Faturei (bruto)</label><div class="inbox"><span class="pre">R$</span><input id="ed-fat" type="number" inputmode="decimal" min="0" step="10" placeholder="0"></div></div>
       <div><label for="ed-km">KM rodados</label><div class="inbox"><input id="ed-km" type="number" inputmode="decimal" min="0" step="1" placeholder="0"><span class="suf">km</span></div></div>
       <div><label for="ed-pl">Combustível pago</label><div class="inbox"><span class="pre">R$</span><input id="ed-pl" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0"><span class="suf">/L</span></div></div>
+      <div><label for="ed-cons">Consumo no dia</label><div class="inbox"><input id="ed-cons" type="number" inputmode="decimal" min="0" step="0.1" placeholder="0"><span class="suf">km/L</span></div></div>
       <div><label for="ed-hrs">Horas rodadas</label><div class="inbox"><input id="ed-hrs" type="number" inputmode="decimal" min="0" step="0.5" placeholder="0"><span class="suf">h</span></div></div>
     </div>
     <div class="ed-readout" id="ed-readout" hidden></div>
     <div class="ed-actions" id="ed-actions" hidden><button class="ghost" id="ed-close">Fechar</button></div>
   </div>
 
-  <nav class="tabbar">
-    <div class="inner">
-      <button class="tab active" data-tab="hoje" aria-label="Hoje">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 3v3M16 3v3"/><circle cx="12" cy="15" r="1.7" fill="currentColor" stroke="none"/></svg>Hoje</button>
-      <button class="tab" data-tab="mes" aria-label="Mês">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Mês</button>
-      <button class="tab" data-tab="plano" aria-label="Plano">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 14l3-4 3 2 4-6"/></svg>Plano</button>
-      <button class="tab" data-tab="config" aria-label="Ajustes">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.3"/><circle cx="8" cy="17" r="2.3"/></svg>Ajustes</button>
-    </div>
-  </nav>
+  <nav class="tabbar"><div class="inner">
+    <button class="tab active" data-tab="hoje" aria-label="Hoje"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 3v3M16 3v3"/><circle cx="12" cy="15" r="1.7" fill="currentColor" stroke="none"/></svg>Hoje</button>
+    <button class="tab" data-tab="mes" aria-label="Mês"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Mês</button>
+    <button class="tab" data-tab="plano" aria-label="Plano"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5M4 19h16"/><path d="M8 14l3-4 3 2 4-6"/></svg>Plano</button>
+    <button class="tab" data-tab="config" aria-label="Ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.3"/><circle cx="8" cy="17" r="2.3"/></svg>Ajustes</button>
+  </div></nav>
 </div>
 
 <script>
@@ -441,20 +454,111 @@
 
   const MONTHS=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
   const WD=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
-  const today=new Date();
-  const Y=today.getFullYear(), M=today.getMonth(), TODAY=today.getDate();
-  const daysInMonth=new Date(Y,M+1,0).getDate();
-  const firstDow=new Date(Y,M,1).getDay();
-  const monthKey=Y+'-'+String(M+1).padStart(2,'0');
-  let selected=new Set(), dayData={}, activeDay=null;
-  const KEY='meta_motorista_v3';
+  const pad=n=>String(n).padStart(2,'0');
+  const now=new Date();
+  const RY=now.getFullYear(), RM=now.getMonth(), TODAY=now.getDate();
+  const currentKey=RY+'-'+pad(RM+1);
+  const KEY='meta_motorista_v4';
   const TABS=['hoje','mes','plano','config'];
 
-  function defaultSelection(){ selected=new Set(); for(let d=1;d<=daysInMonth;d++){ const w=new Date(Y,M,d).getDay(); if(w>=1&&w<=6) selected.add(d);} }
+  let months={}, activeKey=currentKey, aY=RY, aM=RM, aDays=31, aFirst=0, cmpMonth=0;
+  let selected=new Set(), dayData={}, activeDay=null, curTab='hoje';
+
+  function parseKey(k){ const p=k.split('-'); return {y:+p[0], m:+p[1]-1}; }
+  function shiftKey(k,delta){ const {y,m}=parseKey(k); const d=new Date(y,m+delta,1); return d.getFullYear()+'-'+pad(d.getMonth()+1); }
+  function weekdays(k){ const {y,m}=parseKey(k); const dim=new Date(y,m+1,0).getDate(); const a=[]; for(let d=1;d<=dim;d++){ const w=new Date(y,m,d).getDay(); if(w>=1&&w<=6)a.push(d);} return a; }
+  function blankCfg(){ return {meta:'6000',ganho:'1.80',preco:'4.49',consumo:'7.7',horas:'9',fixos:['0','0','0','0','0','0'],pkc:['180','1600','22000','1200'],pkk:['10000','40000','100000','20000']}; }
+  function monthDefaults(k){
+    const keys=Object.keys(months).sort(); let src=null;
+    for(const kk of keys){ if(kk<=k) src=months[kk]; } if(!src && keys.length) src=months[keys[0]];
+    const c = src? {meta:src.meta,ganho:src.ganho,preco:src.preco,consumo:src.consumo,horas:src.horas,fixos:[...src.fixos],pkc:[...src.pkc],pkk:[...src.pkk]} : blankCfg();
+    c.days=weekdays(k); c.daydata={}; return c;
+  }
+  function getMonth(k){ if(!months[k]) months[k]=monthDefaults(k); return months[k]; }
+
+  /* ---------- storage ---------- */
+  function writeActive(){
+    const st=months[activeKey]; if(!st) return;
+    st.meta=$('#meta').value; st.ganho=$('#ganho').value; st.preco=$('#preco').value; st.consumo=$('#consumo').value; st.horas=$('#horas').value;
+    st.fixos=[...document.querySelectorAll('.fixo')].map(e=>e.value);
+    st.pkc=[...document.querySelectorAll('.pk-cost')].map(e=>e.value);
+    st.pkk=[...document.querySelectorAll('.pk-km')].map(e=>e.value);
+    st.days=[...selected]; st.daydata=dayData;
+  }
+  function saveStore(){ writeActive(); try{ localStorage.setItem(KEY, JSON.stringify({current:activeKey, months})); }catch(e){} }
+  function loadStore(){
+    let raw=null; try{ raw=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){}
+    if(raw && raw.months){ months=raw.months; if(raw.current) activeKey=raw.current; }
+    else {
+      let v3=null; try{ v3=JSON.parse(localStorage.getItem('meta_motorista_v3')||'null'); }catch(e){}
+      if(v3){ const mk=v3.month||currentKey; months[mk]={meta:v3.meta||'6000',ganho:v3.ganho||'1.80',preco:v3.preco||'4.49',consumo:v3.consumo||'7.7',horas:v3.horas||'9',fixos:v3.fixos||['0','0','0','0','0','0'],pkc:v3.pkc||['180','1600','22000','1200'],pkk:v3.pkk||['10000','40000','100000','20000'],days:v3.days||[],daydata:v3.daydata||{}}; }
+    }
+    getMonth(currentKey);
+    if(!months[activeKey]) activeKey=currentKey;
+  }
+
+  /* ---------- barra de mês ---------- */
+  function setMonth(k){
+    writeActive();
+    activeKey=k; const {y,m}=parseKey(k); aY=y; aM=m; aDays=new Date(y,m+1,0).getDate(); aFirst=new Date(y,m,1).getDay();
+    cmpMonth = k<currentKey?-1 : k>currentKey?1 : 0;
+    const st=getMonth(k);
+    $('#meta').value=st.meta; $('#ganho').value=st.ganho; $('#preco').value=st.preco; $('#consumo').value=st.consumo; $('#horas').value=st.horas;
+    document.querySelectorAll('.fixo').forEach((e,i)=>e.value=st.fixos[i]!=null?st.fixos[i]:'0');
+    document.querySelectorAll('.pk-cost').forEach((e,i)=>e.value=st.pkc[i]!=null?st.pkc[i]:'');
+    document.querySelectorAll('.pk-km').forEach((e,i)=>e.value=st.pkk[i]!=null?st.pkk[i]:'');
+    selected=new Set(st.days); dayData=st.daydata||{};
+    closeDay(); updateMonthBar(); renderDays(); calc(); saveStore();
+  }
+  function updateMonthBar(){
+    $('#m-label').textContent=MONTHS[aM]+' '+aY;
+    const t=$('#m-tag'); if(cmpMonth===0){t.className='mtag now';t.textContent='atual';} else if(cmpMonth>0){t.className='mtag future';t.textContent='planejar';} else {t.className='mtag past';t.textContent='histórico';}
+    $('#prog-month').textContent=MONTHS[aM]+' '+aY; $('#cal-month').textContent=MONTHS[aM]+' de '+aY;
+    $('#cfg-month').textContent=MONTHS[aM]+' '+aY; $('#hoje-data').textContent=(cmpMonth===0?TODAY+' de '+MONTHS[aM]:MONTHS[aM]+' '+aY);
+  }
+  function monthStats(st){
+    const meta=+String(st.meta).replace(',','.')||0, ganho=+String(st.ganho).replace(',','.')||0, preco=+String(st.preco).replace(',','.')||0, consumo=+String(st.consumo).replace(',','.')||0;
+    const fixos=(st.fixos||[]).reduce((s,v)=>s+(+String(v).replace(',','.')||0),0);
+    const combKm=consumo>0?preco/consumo:0;
+    let manutKm=0; for(let i=0;i<4;i++){ const c=+String((st.pkc||[])[i]).replace(',','.')||0, km=+String((st.pkk||[])[i]).replace(',','.')||0; if(km>0) manutKm+=c/km; }
+    const margem=ganho-combKm-manutKm, totalDias=(st.days||[]).length;
+    let faturado=0, dias=0, tComb=0, tManut=0;
+    Object.keys(st.daydata||{}).forEach(k=>{ const o=st.daydata[k]; if(!(o&&o.f>0))return; faturado+=o.f; dias++; const r=dayFM(o,consumo,preco,ganho,combKm,manutKm); tComb+=r.comb; tManut+=r.manut; });
+    const fixosInc=totalDias>0?fixos*Math.min(1,dias/totalDias):0;
+    const lucro=faturado-tComb-tManut-fixosInc;
+    const fatMes=margem>0?ganho*((meta+fixos)/margem):0;
+    return {faturado,lucro,fatMes,pct:fatMes>0?faturado/fatMes*100:0,dias};
+  }
+  function buildMonthList(){
+    const keys=new Set(Object.keys(months)); keys.add(currentKey); keys.add(activeKey);
+    const arr=[...keys].sort().reverse();
+    const el=$('#m-list'); el.innerHTML='';
+    arr.forEach(k=>{ const {y,m}=parseKey(k); const st=months[k]; const s=st?monthStats(st):null;
+      const row=document.createElement('div'); row.className='mitem'+(k===activeKey?' sel':''); row.dataset.k=k;
+      const tag=k===currentKey?'atual':k>currentKey?'planejar':'histórico';
+      row.innerHTML='<span class="mi-l"><b>'+MONTHS[m]+' '+y+'</b><small>'+tag+(s&&s.dias?' · '+s.dias+' dias':'')+'</small></span>'+
+        '<span class="mi-r">'+(s&&s.faturado>0?brl0(s.faturado):'—')+'</span>';
+      row.addEventListener('click', ()=>{ $('#m-list').hidden=true; goMonth(k); });
+      el.appendChild(row);
+    });
+    const nx=document.createElement('div'); nx.className='mnew'; nx.textContent='‹ anterior   ·   próximo ›  (use as setas)';
+    el.appendChild(nx);
+  }
+  function goMonth(k){ setMonth(k); if(curTab==='hoje'){ switchTab('mes'); } }
+  $('#m-prev').addEventListener('click', ()=>goMonth(shiftKey(activeKey,-1)));
+  $('#m-next').addEventListener('click', ()=>goMonth(shiftKey(activeKey,1)));
+  $('#m-pick').addEventListener('click', e=>{ e.stopPropagation(); const el=$('#m-list'); if(el.hidden){ buildMonthList(); el.hidden=false; } else el.hidden=true; });
+  document.addEventListener('click', e=>{ if(!e.target.closest('.monthbar')) $('#m-list').hidden=true; });
+  $('#copy-next').addEventListener('click', ()=>{
+    writeActive(); const nk=shiftKey(activeKey,1); const src=months[activeKey];
+    months[nk]={meta:src.meta,ganho:src.ganho,preco:src.preco,consumo:src.consumo,horas:src.horas,fixos:[...src.fixos],pkc:[...src.pkc],pkk:[...src.pkk],days:weekdays(nk),daydata:{}};
+    saveStore(); goMonth(nk);
+  });
 
   /* ---------- abas ---------- */
   function switchTab(name){
-    if(!TABS.includes(name)) name='hoje';
+    if(!TABS.includes(name)) name='hoje'; curTab=name;
+    if(name==='hoje' && activeKey!==currentKey) setMonth(currentKey);
     document.querySelectorAll('.panel').forEach(p=>p.hidden = p.dataset.panel!==name);
     document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===name));
     if(name==='hoje') mountToday();
@@ -463,39 +567,29 @@
   }
   document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
 
-  /* ---------- form do dia (reutilizável) ---------- */
+  /* ---------- form do dia ---------- */
   const form=$('#dayForm'), edDate=$('#ed-date'), edWork=$('#ed-work'),
-        edFat=$('#ed-fat'), edKm=$('#ed-km'), edPl=$('#ed-pl'), edHrs=$('#ed-hrs'),
+        edFat=$('#ed-fat'), edKm=$('#ed-km'), edPl=$('#ed-pl'), edCons=$('#ed-cons'), edHrs=$('#ed-hrs'),
         edFields=$('#ed-fields'), edReadout=$('#ed-readout');
   const pnum = el => { const v=parseFloat((el.value||'').replace(',','.')); return isFinite(v)?v:NaN; };
 
   function populateForm(d){
     activeDay=d; const dd=dayData[d]||{};
-    edDate.textContent=(d===TODAY?'Hoje — ':'')+WD[new Date(Y,M,d).getDay()]+', '+d+' de '+MONTHS[M];
+    edDate.textContent=((cmpMonth===0&&d===TODAY)?'Hoje — ':'')+WD[new Date(aY,aM,d).getDay()]+', '+d+' de '+MONTHS[aM];
     edWork.checked=selected.has(d)||(dd.f>0);
-    edFat.value=dd.f!=null?dd.f:''; edKm.value=dd.km!=null?dd.km:''; edPl.value=dd.pl!=null?dd.pl:''; edHrs.value=dd.h!=null?dd.h:'';
+    edFat.value=dd.f!=null?dd.f:''; edKm.value=dd.km!=null?dd.km:''; edPl.value=dd.pl!=null?dd.pl:''; edCons.value=dd.cons!=null?dd.cons:''; edHrs.value=dd.h!=null?dd.h:'';
     edFields.classList.toggle('off', !edWork.checked);
     updateReadout(); renderDays();
   }
-  function mountToday(){
-    $('#hoje-slot').appendChild(form); form.hidden=false;
-    $('#ed-toggle-row').hidden=true; $('#ed-actions').hidden=true;
-    populateForm(TODAY);
-  }
-  function openDay(d){
-    const slot=$('#cal-edit'); slot.hidden=false; slot.appendChild(form); form.hidden=false;
-    $('#ed-toggle-row').hidden=false; $('#ed-actions').hidden=false;
-    populateForm(d);
-    slot.scrollIntoView({behavior:'smooth',block:'nearest'});
-  }
+  function mountToday(){ $('#hoje-slot').appendChild(form); form.hidden=false; $('#ed-toggle-row').hidden=true; $('#ed-actions').hidden=true; populateForm(cmpMonth===0?TODAY:1); }
+  function openDay(d){ const slot=$('#cal-edit'); slot.hidden=false; slot.appendChild(form); form.hidden=false; $('#ed-toggle-row').hidden=false; $('#ed-actions').hidden=false; populateForm(d); slot.scrollIntoView({behavior:'smooth',block:'nearest'}); }
   function closeDay(){ $('#cal-edit').hidden=true; }
 
   edWork.addEventListener('change', ()=>{
     if(activeDay==null) return;
     if(edWork.checked) selected.add(activeDay);
-    else { selected.delete(activeDay); delete dayData[activeDay]; edFat.value=edKm.value=edPl.value=edHrs.value=''; }
-    edFields.classList.toggle('off', !edWork.checked);
-    renderDays(); updateReadout(); refresh();
+    else { selected.delete(activeDay); delete dayData[activeDay]; edFat.value=edKm.value=edPl.value=edCons.value=edHrs.value=''; }
+    edFields.classList.toggle('off', !edWork.checked); renderDays(); updateReadout(); refresh();
   });
   function bindDayField(el,key,selectOnPos){
     el.addEventListener('input', ()=>{
@@ -506,33 +600,33 @@
       renderDays(); updateReadout(); refresh();
     });
   }
-  bindDayField(edFat,'f',true); bindDayField(edKm,'km',false); bindDayField(edPl,'pl',false); bindDayField(edHrs,'h',false);
+  bindDayField(edFat,'f',true); bindDayField(edKm,'km',false); bindDayField(edPl,'pl',false); bindDayField(edCons,'cons',false); bindDayField(edHrs,'h',false);
   $('#ed-close').addEventListener('click', closeDay);
 
   /* ---------- calendário ---------- */
   const daysEl=$('#days');
   function renderDays(){
     daysEl.innerHTML='';
-    for(let i=0;i<firstDow;i++){ const b=document.createElement('div'); b.className='day blank'; daysEl.appendChild(b); }
-    for(let d=1;d<=daysInMonth;d++){
-      const w=new Date(Y,M,d).getDay(), logged=dayData[d]&&dayData[d].f>0, sel=selected.has(d), pend=sel&&!logged&&d<TODAY;
-      let cls='day'; if(w===0||w===6)cls+=' wknd'; if(d<TODAY)cls+=' past'; if(d===TODAY)cls+=' today';
-      if(sel)cls+=' sel'; if(logged)cls+=' logged'; if(pend)cls+=' pending'; if(d===activeDay && !$('#cal-edit').hidden)cls+=' active';
+    for(let i=0;i<aFirst;i++){ const b=document.createElement('div'); b.className='day blank'; daysEl.appendChild(b); }
+    for(let d=1;d<=aDays;d++){
+      const w=new Date(aY,aM,d).getDay(), logged=dayData[d]&&dayData[d].f>0, sel=selected.has(d);
+      const isPast=cmpMonth<0||(cmpMonth===0&&d<TODAY), isToday=cmpMonth===0&&d===TODAY, pend=sel&&!logged&&isPast;
+      let cls='day'; if(w===0||w===6)cls+=' wknd'; if(isPast)cls+=' past'; if(isToday)cls+=' today';
+      if(sel)cls+=' sel'; if(logged)cls+=' logged'; if(pend)cls+=' pending'; if(d===activeDay&&!$('#cal-edit').hidden)cls+=' active';
       const el=document.createElement('div'); el.className=cls; el.dataset.day=d; el.setAttribute('role','button');
       el.innerHTML='<span class="dn">'+d+'</span>'+(logged?'<span class="damt">'+num0(dayData[d].f)+'</span>':'');
       daysEl.appendChild(el);
     }
   }
   daysEl.addEventListener('click', e=>{ const c=e.target.closest('.day'); if(!c||c.classList.contains('blank'))return; openDay(+c.dataset.day); });
-
   function applyPreset(p){
     if(p==='limpar') selected=new Set();
-    else { selected=new Set(); const hi=p==='segsex'?5:6; for(let d=1;d<=daysInMonth;d++){ const w=new Date(Y,M,d).getDay(); if(w>=1&&w<=hi) selected.add(d);} }
+    else { selected=new Set(); const hi=p==='segsex'?5:6; for(let d=1;d<=aDays;d++){ const w=new Date(aY,aM,d).getDay(); if(w>=1&&w<=hi) selected.add(d);} }
     closeDay(); renderDays(); refresh();
   }
   document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>applyPreset(c.dataset.preset)));
 
-  /* ---------- custos ---------- */
+  /* ---------- custo por km + custo do dia ---------- */
   function manutPerKm(){
     let sum=0;
     document.querySelectorAll('.pkrow').forEach(row=>{
@@ -542,28 +636,15 @@
     });
     return sum;
   }
-
-  /* ---------- persistência ---------- */
-  function save(){
-    try{ localStorage.setItem(KEY, JSON.stringify({
-      meta:$('#meta').value, ganho:$('#ganho').value, preco:$('#preco').value, consumo:$('#consumo').value, horas:$('#horas').value,
-      fixos:[...document.querySelectorAll('.fixo')].map(e=>e.value),
-      pkc:[...document.querySelectorAll('.pk-cost')].map(e=>e.value), pkk:[...document.querySelectorAll('.pk-km')].map(e=>e.value),
-      month:monthKey, days:[...selected], daydata:dayData })); }catch(e){}
-  }
-  function load(){
-    let d=null; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){}
-    if(d){
-      ['meta','ganho','preco','consumo','horas'].forEach(i=>{ if(d[i]!=null) $('#'+i).value=d[i]; });
-      if(Array.isArray(d.fixos)) document.querySelectorAll('.fixo').forEach((e,i)=>{ if(d.fixos[i]!=null) e.value=d.fixos[i]; });
-      if(Array.isArray(d.pkc)) document.querySelectorAll('.pk-cost').forEach((e,i)=>{ if(d.pkc[i]!=null) e.value=d.pkc[i]; });
-      if(Array.isArray(d.pkk)) document.querySelectorAll('.pk-km').forEach((e,i)=>{ if(d.pkk[i]!=null) e.value=d.pkk[i]; });
-      if(d.month===monthKey){ if(Array.isArray(d.days)) selected=new Set(d.days); if(d.daydata&&typeof d.daydata==='object') dayData=d.daydata; }
-      else defaultSelection();
-    } else defaultSelection();
+  function dayFM(o, consumo, preco, ganho, combKm, manutKm){
+    const f=o.f||0, km=o.km||0, cons=(o.cons>0?o.cons:consumo);
+    let comb, manut, lit=0;
+    if(km>0){ lit=cons>0?km/cons:0; comb=lit*(o.pl>0?o.pl:preco); manut=manutKm*km; }
+    else { comb=ganho>0?f*(combKm/ganho):0; manut=ganho>0?f*(manutKm/ganho):0; }
+    return {comb,manut,lit};
   }
 
-  /* ---------- cálculo ---------- */
+  /* ---------- cálculo principal ---------- */
   function calc(){
     const meta=val('meta'), ganho=val('ganho'), preco=val('preco'), consumo=val('consumo'), horas=val('horas');
     const fixos=[...document.querySelectorAll('.fixo')].reduce((s,e)=>s+(parseFloat((e.value||'').replace(',','.'))||0),0);
@@ -572,22 +653,19 @@
     $('#horas-v').textContent=num1(horas)+' h';
     $('#o-combkm').textContent=brl(combKm); $('#o-manutkm').textContent=brl(manutKm);
     $('#o-custokm').textContent=brl(custoKm); $('#o-fixos').textContent=brl0(fixos);
-    $('#head-sub').textContent=MONTHS[M].charAt(0).toUpperCase()+MONTHS[M].slice(1)+' de '+Y;
-    $('#hoje-data').textContent=TODAY+' de '+MONTHS[M];
 
     const totalDias=selected.size;
     let faturado=0, horasTrab=0, diasTrab=0;
     Object.keys(dayData).forEach(k=>{ const o=dayData[k]; if(o&&o.f>0){ faturado+=o.f; diasTrab++; horasTrab+=(o.h||0);} });
-    let diasRest=0; selected.forEach(d=>{ const lg=dayData[d]&&dayData[d].f>0; if(d>=TODAY&&!lg) diasRest++; });
+    let diasRest=0; selected.forEach(d=>{ const lg=dayData[d]&&dayData[d].f>0; const fut=cmpMonth>0||(cmpMonth===0&&d>=TODAY); if(fut&&!lg) diasRest++; });
     $('#c-total').textContent=totalDias; $('#c-log').textContent=diasTrab; $('#c-rem').textContent=diasRest;
 
     const warn=$('#warn');
     if(margem<=0){
       ['h-km','h-fat','h-hr','d-kmmes','d-fatmes','d-retdia'].forEach(i=>$('#'+i).textContent='—');
       $('#d-margem').textContent=brl(margem);
-      warn.textContent='⚠ Custo por km ('+brl(custoKm)+') ficou ≥ ganho por km ('+brl(ganho)+'). Sem sobra por km não dá pra fechar a meta.';
-      warn.classList.add('show');
-      setStatus('bad','Impossível'); setHoje('bad','Custo por km maior que o ganho — ajuste em Ajustes.');
+      warn.textContent='⚠ Custo por km ('+brl(custoKm)+') ficou ≥ ganho por km ('+brl(ganho)+'). Ajuste em Ajustes.';
+      warn.classList.add('show'); setStatus('bad','Impossível'); setHoje('bad','Custo por km maior que o ganho — ajuste em Ajustes.');
       $('#ins-list').innerHTML='<li>Aumente o ganho por km ou reduza os custos.</li>';
       updateProgress(faturado,0,0,meta); renderCaixinhas({comb:0,manut:0,fix:0,lucro:0,dias:0,fixDia:0}); updateReadout(); return;
     }
@@ -603,15 +681,11 @@
     $('#d-margem').textContent=brl(margem); $('#d-kmmes').textContent=num0(kmMes)+' km';
     $('#d-fatmes').textContent=brl0(fatMes); $('#d-retdia').textContent=brl0(retDia);
 
-    // dias registrados: médias reais + caixinhas
     let skm=0, sh=0, sLit=0, sLitPreco=0, dkm=0, sfKm=0, sfH=0, totalComb=0, totalManut=0;
     Object.keys(dayData).forEach(k=>{ const o=dayData[k]; if(!(o&&o.f>0)) return;
-      const km=o.km||0;
-      if((o.h||0)>0){ sh+=o.h; sfH+=o.f; }
-      let comb, manut;
-      if(km>0){ skm+=km; dkm++; sfKm+=o.f; const p=(o.pl>0?o.pl:preco); const lit=consumo>0?km/consumo:0; sLit+=lit; sLitPreco+=lit*p; comb=lit*p; manut=manutKm*km; }
-      else { comb=ganho>0?o.f*(combKm/ganho):0; manut=ganho>0?o.f*(manutKm/ganho):0; }
-      totalComb+=comb; totalManut+=manut;
+      const km=o.km||0; if((o.h||0)>0){ sh+=o.h; sfH+=o.f; }
+      const r=dayFM(o,consumo,preco,ganho,combKm,manutKm); totalComb+=r.comb; totalManut+=r.manut;
+      if(km>0){ skm+=km; dkm++; sfKm+=o.f; sLit+=r.lit; sLitPreco+=r.lit*(o.pl>0?o.pl:preco); }
     });
     const fixosInc=totalDias>0?fixos*Math.min(1,diasTrab/totalDias):0;
     const lucroReal=faturado-totalComb-totalManut-fixosInc;
@@ -619,8 +693,8 @@
     renderCaixinhas({comb:totalComb,manut:totalManut,fix:fixosInc,lucro:lucroReal,dias:diasTrab,fixDia:(totalDias>0?fixos/totalDias:0)});
 
     const ganhoKmReal=skm>0?sfKm/skm:NaN, ganhoHrReal=sh>0?sfH/sh:NaN, precoReal=sLit>0?sLitPreco/sLit:NaN;
-    const kmDiaReal=dkm>0?skm/dkm:NaN, fatDiaReal=diasTrab>0?faturado/diasTrab:NaN;
-    renderCompare({ganho,rhora,preco,kmDia,fatDia,ganhoKmReal,ganhoHrReal,precoReal,kmDiaReal,fatDiaReal});
+    const consumoReal=sLit>0?skm/sLit:NaN, kmDiaReal=dkm>0?skm/dkm:NaN, fatDiaReal=diasTrab>0?faturado/diasTrab:NaN;
+    renderCompare({ganho,rhora,preco,consumo,kmDia,fatDia,ganhoKmReal,ganhoHrReal,precoReal,consumoReal,kmDiaReal,fatDiaReal});
     buildInsights({meta,fatMes,fatDia,rhora,horas,faturado,diasTrab,horasTrab,diasRest,totalDias,lucroReal,ganho,ganhoKmReal});
     updateReadout();
   }
@@ -635,25 +709,22 @@
   }
   function setStatus(kind,label){ const s=$('#status'); s.className='pill '+kind; s.innerHTML='<span class="d"></span>'+label; }
   function setHoje(kind,line){ $('#h-dot').className='hdot '+(kind==='ok'?'ok':kind==='bad'?'bad':kind==='warn'?'warn':''); $('#h-line').innerHTML=line; }
-
   function renderCaixinhas(c){
-    $('#cx-comb').textContent=brl0(c.comb); $('#cx-manut').textContent=brl0(c.manut);
-    $('#cx-fix').textContent=brl0(c.fix); $('#cx-lucro').textContent=brl0(c.lucro);
+    $('#cx-comb').textContent=brl0(c.comb); $('#cx-manut').textContent=brl0(c.manut); $('#cx-fix').textContent=brl0(c.fix); $('#cx-lucro').textContent=brl0(c.lucro);
     if(c.dias>0) $('#cx-hint').innerHTML='Por dia trabalhado, separe em média <b>'+brl0(c.manut/c.dias)+'</b> p/ manutenção e <b>'+brl0(c.fixDia)+'</b> p/ custos fixos. O resto é seu.';
     else $('#cx-hint').textContent='Registre os dias (km, combustível, faturamento) pra ver quanto guardar em cada caixinha.';
   }
-
   function setCmp(idp,idr,plano,real,fmt,betterHigher){
     $('#'+idp).textContent=fmt(plano); const el=$('#'+idr);
     if(!isFinite(real)){ el.textContent='—'; el.className='rl dash'; return; }
-    el.textContent=fmt(real);
-    const good=betterHigher===null?null:(betterHigher?real>=plano:real<=plano);
+    el.textContent=fmt(real); const good=betterHigher===null?null:(betterHigher?real>=plano:real<=plano);
     el.className='rl '+(good===null?'':(good?'good':'bad'));
   }
   function renderCompare(c){
     setCmp('cp-ganho','cr-ganho', c.ganho, c.ganhoKmReal, brl, true);
     setCmp('cp-hora','cr-hora', c.rhora, c.ganhoHrReal, brl0, true);
     setCmp('cp-preco','cr-preco', c.preco, c.precoReal, brl, false);
+    setCmp('cp-cons','cr-cons', c.consumo, c.consumoReal, v=>num1(v)+' km/L', true);
     setCmp('cp-km','cr-km', c.kmDia, c.kmDiaReal, v=>num0(v)+' km', null);
     setCmp('cp-fat','cr-fat', c.fatDia, c.fatDiaReal, brl0, true);
     const rg=$('#rn-ganho');
@@ -661,7 +732,6 @@
     const rp=$('#rn-preco');
     if(isFinite(c.precoReal)){ rp.hidden=false; const bad=c.precoReal>c.preco; rp.innerHTML='<span class="rk">real:</span> <span class="rv'+(bad?' bad':'')+'">'+brl(c.precoReal)+'/L</span>'; } else rp.hidden=true;
   }
-
   function buildInsights(x){
     const li=[]; const falta=Math.max(0,x.fatMes-x.faturado);
     const media=x.diasTrab>0?x.faturado/x.diasTrab:0;
@@ -671,7 +741,7 @@
     const extra=isFinite(diasFechar)?Math.max(0,diasFechar-x.diasRest):Infinity;
 
     if(x.totalDias===0){ setStatus('neutral','Marque seus dias'); setHoje('neutral','Marque no Mês os dias que vai trabalhar.'); $('#ins-list').innerHTML='<li>Vá na aba Mês e toque nos dias que vai trabalhar.</li>'; return; }
-    if(falta<=0){ setStatus('ok','Meta batida 🎉'); setHoje('ok','Meta do mês batida 🎉 O que faturar a mais é lucro extra.'); }
+    if(falta<=0){ setStatus('ok','Meta batida 🎉'); setHoje('ok','Meta do mês batida 🎉'); }
     else if(x.diasTrab===0){ setStatus('neutral','Sem registros'); setHoje('neutral','Feche seu primeiro dia pra começar o acompanhamento.'); }
     else if(proj>=x.fatMes){ const ad=media>=x.fatDia*1.03; setStatus('ok',ad?'Adiantado':'No ritmo'); setHoje('ok',(ad?'Adiantado':'No ritmo')+' — faltam <b>'+brl0(falta)+'</b>, dá com sua média.'); }
     else { setStatus('bad','Atrasado'); setHoje('bad','Atrasado — precisa <b>'+brl0(needDia)+'/dia</b> nos '+x.diasRest+' dias que faltam.'); }
@@ -679,11 +749,11 @@
     li.push('Faturou <b>'+brl0(x.faturado)+'</b> ('+num0(x.fatMes>0?x.faturado/x.fatMes*100:0)+'% da meta) em <b>'+x.diasTrab+'</b> dia(s). Lucro ~<b>'+brl0(x.lucroReal)+'</b>.');
     if(x.diasTrab>0){ const dlt=media-x.fatDia; li.push('Média <b>'+brl0(media)+'/dia</b> vs <b>'+brl0(x.fatDia)+'</b> do plano — '+(dlt>=0?'<b>+'+brl0(dlt)+'</b> acima':'<b>'+brl0(dlt)+'</b> abaixo')+'.'); }
     if(x.horasTrab>0){ const rh=x.faturado/x.horasTrab; li.push('Rodou <b>'+num1(x.horasTrab)+'h</b> — <b>'+brl0(rh)+'/h</b> (alvo '+brl0(x.rhora)+'/h).'+(rh<x.rhora&&x.rhora>0?' Render menos por hora empurra a meta pra frente.':'')); }
-    if(falta<=0){ li.push('Meta do mês <b>fechada</b>.'); }
+    if(falta<=0) li.push('Meta do mês <b>fechada</b>.');
     else if(x.diasRest>0){
       const dmais=needDia-media; let t='Faltam <b>'+brl0(falta)+'</b> em <b>'+x.diasRest+'</b> dias → <b>'+brl0(needDia)+'/dia</b>';
       if(x.diasTrab>0&&isFinite(dmais)) t+= dmais>0?' (<b>'+brl0(dmais)+'</b> a mais que sua média)':' (dá com folga)'; t+='.'; li.push(t);
-      if(x.diasTrab>0&&proj<x.fatMes&&isFinite(extra)&&extra>0) li.push('Na sua média, precisaria de <b>+'+extra+' dia(s)</b> pra fechar — ou acelerar nos que faltam.');
+      if(x.diasTrab>0&&proj<x.fatMes&&isFinite(extra)&&extra>0) li.push('Na sua média, precisaria de <b>+'+extra+' dia(s)</b> pra fechar — ou acelerar.');
       else if(proj>=x.fatMes) li.push('Mantendo a média, você fecha o mês (projeção <b>'+brl0(proj)+'</b>). 👍');
     } else { if(isFinite(extra)&&extra>0) li.push('Sem dias futuros marcados. Marque <b>+'+extra+' dia(s)</b> (~'+brl0(media)+'/dia) pra fechar os <b>'+brl0(falta)+'</b>.'); else li.push('Faltam <b>'+brl0(falta)+'</b> e não há dias de hoje em diante marcados.'); }
     if(isFinite(x.ganhoKmReal)&&x.ganho>0){ const dv=(x.ganhoKmReal-x.ganho)/x.ganho; if(Math.abs(dv)>=0.05) li.push('Ganho/km <b>real</b> é <b>'+brl(x.ganhoKmReal)+'</b> ('+(dv>0?'acima':'abaixo')+' do plano). '+(dv<0?'Atualize "ganho por km" em Ajustes.':'Pode subir a meta.')); }
@@ -692,27 +762,25 @@
 
   function updateReadout(){
     if(activeDay==null || form.hidden){ edReadout.hidden=true; return; }
-    const dd=dayData[activeDay]||{}, f=dd.f||0, km=dd.km||0, h=dd.h||0, pl=dd.pl||0;
+    const dd=dayData[activeDay]||{}, f=dd.f||0;
     if(!(f>0)){ edReadout.hidden=true; return; }
     const consumo=val('consumo'), preco=val('preco'), ganho=val('ganho'), manutKm=manutPerKm();
     const combKm=consumo>0?preco/consumo:0, totalDias=selected.size||1;
     const fixos=[...document.querySelectorAll('.fixo')].reduce((s,e)=>s+(parseFloat((e.value||'').replace(',','.'))||0),0);
-    let comb, manut;
-    if(km>0){ comb=(consumo>0?km/consumo:0)*(pl||preco); manut=manutKm*km; }
-    else { comb=ganho>0?f*(combKm/ganho):0; manut=ganho>0?f*(manutKm/ganho):0; }
-    const fixoDia=fixos/totalDias, lucro=f-comb-manut-fixoDia;
-    const top=[]; if(km>0) top.push('<b>'+brl(f/km)+'</b>/km'); if(h>0) top.push('<b>'+brl(f/h)+'</b>/h');
+    const r=dayFM(dd,consumo,preco,ganho,combKm,manutKm);
+    const fixoDia=fixos/totalDias, lucro=f-r.comb-r.manut-fixoDia, km=dd.km||0, h=dd.h||0, consDia=dd.cons>0?dd.cons:consumo;
+    const top=[]; if(km>0) top.push('<b>'+brl(f/km)+'</b>/km'); if(h>0) top.push('<b>'+brl(f/h)+'</b>/h'); if(km>0&&consDia>0) top.push('<b>'+num1(consDia)+'</b> km/L');
     edReadout.innerHTML='<div style="font-family:var(--display);font-weight:600;margin-bottom:8px">Resumo do dia</div>'+
       (top.length?'<div class="hint" style="margin:-4px 0 8px">'+top.join(' · ')+'</div>':'')+
       '<div class="cx">'+
-      '<div class="cx-row"><span class="cx-k">⛽ Combustível</span><b>'+brl0(comb)+'</b></div>'+
-      '<div class="cx-row"><span class="cx-k">🔧 Guardar manutenção</span><b>'+brl0(manut)+'</b></div>'+
+      '<div class="cx-row"><span class="cx-k">⛽ Combustível</span><b>'+brl0(r.comb)+'</b></div>'+
+      '<div class="cx-row"><span class="cx-k">🔧 Guardar manutenção</span><b>'+brl0(r.manut)+'</b></div>'+
       '<div class="cx-row"><span class="cx-k">📄 Guardar custos fixos</span><b>'+brl0(fixoDia)+'</b></div>'+
       '<div class="cx-row total"><span class="cx-k">💰 Sobra do dia</span><b>'+brl0(lucro)+'</b></div></div>';
     edReadout.hidden=false;
   }
 
-  function refresh(){ calc(); save(); }
+  function refresh(){ calc(); saveStore(); }
 
   $('#theme').addEventListener('click', ()=>{
     const cur=document.documentElement.getAttribute('data-theme');
@@ -724,11 +792,11 @@
 
   document.addEventListener('input', e=>{ if(e.target.matches('input') && !e.target.closest('#dayForm')) refresh(); });
 
-  $('#cal-month').textContent=MONTHS[M]+' de '+Y;
-  load(); renderDays();
+  /* ---------- init ---------- */
+  loadStore();
+  setMonth(activeKey);
   const startTab=(location.hash||'').replace('#','');
   switchTab(TABS.includes(startTab)?startTab:'hoje');
-  calc();
 </script>
 
 </body>
