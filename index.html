@@ -314,10 +314,10 @@
       </section>
 
       <section class="card">
-        <p class="ct"><span class="n">3</span> Produtividade</p>
-        <div class="slider-head"><label for="kmh">Km por hora rodando</label><span class="big" id="kmh-v">25 km/h</span></div>
-        <input id="kmh" type="range" min="8" max="45" step="1" value="25">
-        <span class="hint">Com trânsito e espera. Serve só pra estimar as horas por dia.</span>
+        <p class="ct"><span class="n">3</span> Jornada</p>
+        <div class="slider-head"><label for="horas">Horas por dia que pretende trabalhar</label><span class="big" id="horas-v">9 h</span></div>
+        <input id="horas" type="range" min="1" max="16" step="0.5" value="9">
+        <span class="hint">Você escolhe a jornada e o app mostra quanto precisa render por hora pra bater a meta — mais fácil de julgar do que chutar km/h.</span>
       </section>
     </div>
 
@@ -329,7 +329,7 @@
         <div class="heroes">
           <div class="hero km"><div class="cap"><span class="dot"></span>KM / dia</div><div class="val" id="h-km">—</div><div class="sub">no painel do carro</div></div>
           <div class="hero fat"><div class="cap"><span class="dot"></span>Fatura / dia</div><div class="val" id="h-fat">—</div><div class="sub">bruto, por dia</div></div>
-          <div class="hero hr"><div class="cap"><span class="dot"></span>Horas / dia</div><div class="val" id="h-hr">—</div><div class="sub">tempo rodando</div></div>
+          <div class="hero hr"><div class="cap"><span class="dot"></span>R$ / hora</div><div class="val" id="h-hr">—</div><div class="sub">que precisa render</div></div>
         </div>
       </div>
 
@@ -420,7 +420,7 @@
     try{
       localStorage.setItem(KEY, JSON.stringify({
         meta:$('#meta').value, jafat:$('#jafat').value, ganho:$('#ganho').value,
-        preco:$('#preco').value, consumo:$('#consumo').value, kmh:$('#kmh').value,
+        preco:$('#preco').value, consumo:$('#consumo').value, horas:$('#horas').value,
         fixos:[...document.querySelectorAll('.fixo')].map(e=>e.value),
         pkc:[...document.querySelectorAll('.pk-cost')].map(e=>e.value),
         pkk:[...document.querySelectorAll('.pk-km')].map(e=>e.value),
@@ -431,7 +431,7 @@
   function load(){
     let d=null; try{ d=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){}
     if(d){
-      ['meta','jafat','ganho','preco','consumo','kmh'].forEach(i=>{ if(d[i]!=null) $('#'+i).value=d[i]; });
+      ['meta','jafat','ganho','preco','consumo','horas'].forEach(i=>{ if(d[i]!=null) $('#'+i).value=d[i]; });
       if(Array.isArray(d.fixos)) document.querySelectorAll('.fixo').forEach((e,i)=>{ if(d.fixos[i]!=null) e.value=d.fixos[i]; });
       if(Array.isArray(d.pkc)) document.querySelectorAll('.pk-cost').forEach((e,i)=>{ if(d.pkc[i]!=null) e.value=d.pkc[i]; });
       if(Array.isArray(d.pkk)) document.querySelectorAll('.pk-km').forEach((e,i)=>{ if(d.pkk[i]!=null) e.value=d.pkk[i]; });
@@ -441,7 +441,7 @@
 
   function calc(){
     const meta=val('meta'), jafat=val('jafat'), ganho=val('ganho'),
-          preco=val('preco'), consumo=val('consumo'), kmh=val('kmh');
+          preco=val('preco'), consumo=val('consumo'), horas=val('horas');
     const fixos=[...document.querySelectorAll('.fixo')].reduce((s,e)=>s+(parseFloat((e.value||'').replace(',','.'))||0),0);
     const combKm = consumo>0 ? preco/consumo : 0;
     const manutKm = manutPerKm();
@@ -452,7 +452,7 @@
     const totalDias = selected.size;
     let remDias=0; selected.forEach(d=>{ if(d>=TODAY) remDias++; });
 
-    $('#kmh-v').textContent = kmh+' km/h';
+    $('#horas-v').textContent = num1(horas)+' h';
     $('#o-combkm').textContent = brl(combKm);
     $('#o-custokm').textContent = brl(custoKm);
     $('#o-fixos').textContent = brl0(fixos);
@@ -473,11 +473,11 @@
 
     const kmMes=(meta+fixos)/margem, fatMes=ganho*kmMes, custoMes=custoKm*kmMes+fixos;
     const kmDia=totalDias>0?kmMes/totalDias:0, fatDia=totalDias>0?fatMes/totalDias:0;
-    const horasDia=kmh>0?kmDia/kmh:0, retDia=totalDias>0?meta/totalDias:0;
+    const rhora=horas>0?fatDia/horas:0, retDia=totalDias>0?meta/totalDias:0;
 
     $('#h-km').textContent  = totalDias>0? num0(kmDia)+' km' : '—';
     $('#h-fat').textContent = totalDias>0? brl0(fatDia) : '—';
-    $('#h-hr').textContent  = totalDias>0? num1(horasDia)+' h' : '—';
+    $('#h-hr').textContent  = (totalDias>0 && horas>0)? brl0(rhora)+'/h' : '—';
     $('#d-margem').textContent=brl(margem);
     $('#d-kmmes').textContent=num0(kmMes)+' km';
     $('#d-fatmes').textContent=brl0(fatMes);
@@ -487,9 +487,8 @@
     if(totalDias===0){
       $('#say').innerHTML='Selecione no calendário os dias que você vai trabalhar pra montar o plano.';
     }else{
-      const al = horasDia>10 ? ' <b style="color:var(--danger)">Passa de 10h/dia</b> — marque mais dias.' : '';
       $('#say').innerHTML='Pra retirar <b>'+brl0(meta)+'</b> em <b>'+totalDias+' dias</b>, faça ~<b>'+num0(kmDia)+
-        ' km/dia</b> e <b>'+brl0(fatDia)+'/dia</b> (~'+num1(horasDia)+'h).'+al;
+        ' km/dia</b> (<b>'+brl0(fatDia)+'/dia</b>). Em <b>'+num1(horas)+'h/dia</b>, precisa render <b>'+brl0(rhora)+'/hora</b>.';
     }
 
     // progresso + o que falta
