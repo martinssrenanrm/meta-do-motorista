@@ -86,6 +86,11 @@
   .mitem .mi-r{font-variant-numeric:tabular-nums;font-weight:700;color:var(--accent)}
   .msheet .mnew{text-align:center;color:var(--muted);font-weight:600;font-size:.82rem;padding:9px;border-top:1px solid var(--border);margin-top:4px}
 
+  .backup-nudge{display:flex;align-items:center;gap:9px;background:var(--amber-soft);border:1px solid var(--amber);color:var(--amber);border-radius:13px;padding:11px 13px;font-size:.84rem;line-height:1.35}
+  .backup-nudge b{font-weight:700}
+  .backup-nudge button{flex:none;margin-left:auto;border:1px solid var(--amber);background:transparent;color:var(--amber);border-radius:9px;padding:7px 11px;font:700 .78rem var(--body);cursor:pointer;white-space:nowrap}
+  .backup-nudge button:hover{background:var(--amber);color:#fff}
+
   .panel{display:flex;flex-direction:column;gap:15px}
   .panel[hidden]{display:none}
   .card{background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--sh);padding:17px}
@@ -147,7 +152,12 @@
   .ed-fields>div{min-width:0}
   .ed-fields label{font-size:.78rem;color:var(--muted);display:block;margin-bottom:4px}
   .ed-readout{margin-top:13px;background:var(--surface-2);border:1px solid var(--border);border-radius:13px;padding:13px}
-  .ed-actions{display:flex;justify-content:flex-end;margin-top:12px}
+  .ed-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px}
+  .ed-saved{font-size:.8rem;font-weight:600;color:var(--accent);opacity:0;transition:opacity .2s}
+  .ed-saved.show{opacity:1}
+  .ed-actions .btns{display:flex;gap:8px;margin-left:auto}
+  .ghost.save{border-color:var(--accent);color:#fff;background:linear-gradient(145deg,var(--accent),var(--accent-2))}
+  .ghost.save:hover{color:#fff;filter:brightness(1.05)}
 
   .cx{display:flex;flex-direction:column}
   .cx-row{display:flex;justify-content:space-between;align-items:baseline;padding:10px 2px;font-size:.92rem}
@@ -256,6 +266,7 @@
   <main>
     <!-- HOJE -->
     <section class="panel" data-panel="hoje">
+      <div class="backup-nudge" id="backup-nudge" hidden>☁ <span>Seus dados estão só <b>neste aparelho</b>. Ative o backup pra <b>nunca perder</b>.</span><button id="nudge-go">Ativar ›</button></div>
       <div class="card">
         <p class="ct"><span class="n">★</span> Progresso <small id="prog-month"></small></p>
         <div class="prog-top">
@@ -450,7 +461,10 @@
       <div><label for="ed-hrs">Horas rodadas</label><div class="inbox"><input id="ed-hrs" type="number" inputmode="decimal" min="0" step="0.5" placeholder="0"><span class="suf">h</span></div></div>
     </div>
     <div class="ed-readout" id="ed-readout" hidden></div>
-    <div class="ed-actions" id="ed-actions" hidden><button class="ghost" id="ed-close">Fechar</button></div>
+    <div class="ed-actions" id="ed-actions" hidden>
+      <span class="ed-saved" id="ed-saved"></span>
+      <div class="btns"><button class="ghost save" id="ed-save">Salvar o dia ✓</button><button class="ghost" id="ed-close">Fechar</button></div>
+    </div>
   </div>
 
   <nav class="tabbar"><div class="inner">
@@ -598,9 +612,12 @@
     edFields.classList.toggle('off', !edWork.checked);
     updateReadout(); renderDays();
   }
-  function mountToday(){ $('#hoje-slot').appendChild(form); form.hidden=false; $('#ed-toggle-row').hidden=true; $('#ed-actions').hidden=true; populateForm(cmpMonth===0?TODAY:1); }
-  function openDay(d){ const slot=$('#cal-edit'); slot.hidden=false; slot.appendChild(form); form.hidden=false; $('#ed-toggle-row').hidden=false; $('#ed-actions').hidden=false; populateForm(d); slot.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+  function mountToday(){ $('#hoje-slot').appendChild(form); form.hidden=false; $('#ed-toggle-row').hidden=true; $('#ed-actions').hidden=false; $('#ed-close').hidden=true; populateForm(cmpMonth===0?TODAY:1); edFields.classList.remove('off'); }
+  function openDay(d){ const slot=$('#cal-edit'); slot.hidden=false; slot.appendChild(form); form.hidden=false; $('#ed-toggle-row').hidden=false; $('#ed-actions').hidden=false; $('#ed-close').hidden=false; populateForm(d); slot.scrollIntoView({behavior:'smooth',block:'nearest'}); }
   function closeDay(){ $('#cal-edit').hidden=true; }
+  let savedTimer=null;
+  function flashSaved(){ const s=$('#ed-saved'); if(!s)return; s.textContent='Salvo ✓ '+hhmm(); s.classList.add('show'); clearTimeout(savedTimer); savedTimer=setTimeout(()=>s.classList.remove('show'),4000); }
+  $('#ed-save').addEventListener('click', ()=>{ writeActive(); if(months[activeKey]) months[activeKey]._u=Date.now(); saveStore(); if(cloudCode) cloudPush(); flashSaved(); });
 
   edWork.addEventListener('change', ()=>{
     if(activeDay==null) return;
@@ -826,8 +843,10 @@
   function renderCloudUI(){
     const on=!!cloudCode;
     $('#cloud-off').hidden=on; $('#cloud-on-box').hidden=!on;
+    const nd=$('#backup-nudge'); if(nd) nd.hidden=on;
     if(on) $('#cloud-code').value=cloudCode;
   }
+  $('#nudge-go').addEventListener('click', ()=>{ switchTab('config'); $('#cloud-card').scrollIntoView({behavior:'smooth',block:'start'}); });
   $('#cloud-on').addEventListener('click', ()=>{ cloudCode=genCode(); try{ localStorage.setItem(CKEY,cloudCode); }catch(e){} renderCloudUI(); setCloudStatus('Ativando…'); cloudPush(); });
   $('#cloud-restore-btn').addEventListener('click', ()=>{
     const c=($('#cloud-restore').value||'').trim(); const msg=$('#cloud-msg');
