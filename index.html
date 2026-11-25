@@ -882,7 +882,7 @@
 
   /* ---------- init ---------- */
   loadStore();
-  setMonth(activeKey);
+  renderMonth(activeKey);   // NÃO usar setMonth aqui: o writeActive dele leria os campos em branco e apagaria os dados recém-carregados
   renderCloudUI();
   if(cloudCode) cloudPull();
   const startTab=(location.hash||'').replace('#','');
