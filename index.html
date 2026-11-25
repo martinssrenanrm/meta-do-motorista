@@ -352,6 +352,28 @@
 
     <!-- AJUSTES -->
     <section class="panel" data-panel="config" hidden>
+      <div class="card" id="cloud-card">
+        <p class="ct"><span class="n">☁</span> Backup na nuvem <small id="cloud-when"></small></p>
+        <div id="cloud-off">
+          <span class="hint" style="display:block;margin-bottom:11px">Guarda seus dados num servidor seguro pra <b>nunca perder</b> e abrir em qualquer aparelho. Você recebe um código — é a chave dos seus dados.</span>
+          <button class="ghost" id="cloud-on" style="width:100%;padding:13px;border-color:var(--accent);color:var(--accent);font-size:.9rem">☁ Ativar backup na nuvem</button>
+          <div style="margin-top:13px;border-top:1px solid var(--border);padding-top:13px">
+            <label class="hint" for="cloud-restore" style="display:block;margin-bottom:5px">Já tem um código (outro aparelho)? Cole pra restaurar:</label>
+            <div class="inbox"><input id="cloud-restore" type="text" placeholder="cole o código aqui" autocomplete="off" style="text-align:left;font-size:.9rem;padding:11px"></div>
+            <button class="ghost" id="cloud-restore-btn" style="width:100%;margin-top:8px;padding:11px">Restaurar deste código</button>
+            <span class="hint" id="cloud-msg" style="display:block;margin-top:7px;color:var(--danger)"></span>
+          </div>
+        </div>
+        <div id="cloud-on-box" hidden>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px"><span class="hint" style="margin:0">Status</span><b id="cloud-status" style="color:var(--accent);font-size:.9rem">Ativo ✓</b></div>
+          <span class="hint" style="display:block;margin-bottom:6px">Seu código de backup — <b>guarde num lugar seguro</b>. Com ele você recupera tudo em qualquer aparelho:</span>
+          <div class="inbox"><input id="cloud-code" type="text" readonly style="text-align:left;font-size:.86rem;padding:11px"></div>
+          <div style="display:flex;gap:8px;margin-top:9px">
+            <button class="ghost" id="cloud-copy" style="flex:1;padding:11px">Copiar código</button>
+            <button class="ghost" id="cloud-off-btn" style="flex:1;padding:11px">Desativar</button>
+          </div>
+        </div>
+      </div>
       <div class="card">
         <p class="ct"><span class="n">1</span> Sua meta <small id="cfg-month"></small></p>
         <div class="field">
@@ -780,7 +802,47 @@
     edReadout.hidden=false;
   }
 
-  function refresh(){ calc(); saveStore(); }
+  function refresh(){ calc(); if(months[activeKey]) months[activeKey]._u=Date.now(); saveStore(); cloudPushSoon(); }
+
+  /* ---------- backup na nuvem (Edge Function + código) ---------- */
+  const SYNC_URL='https://yoimpltmxtmbhlfgjzoo.supabase.co/functions/v1/mtr-sync';
+  const CKEY=KEY+'_cloud';
+  let cloudCode=null; try{ cloudCode=localStorage.getItem(CKEY)||null; }catch(e){}
+  let pushTimer=null;
+  const hhmm=()=>new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  function genCode(){ const a=new Uint8Array(15); crypto.getRandomValues(a); let s=''; for(const b of a) s+=b.toString(36); return 'mtr-'+s.replace(/[^a-z0-9]/g,'').slice(0,20); }
+  async function cloudCall(action,payload){
+    const r=await fetch(SYNC_URL,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code:cloudCode,action,payload})});
+    if(!r.ok) throw new Error('http '+r.status); return r.json();
+  }
+  function setCloudStatus(t){ const e=$('#cloud-status'); if(e) e.textContent=t; }
+  function cloudPushSoon(){ if(!cloudCode) return; clearTimeout(pushTimer); pushTimer=setTimeout(cloudPush,1500); }
+  async function cloudPush(){
+    if(!cloudCode) return; writeActive();
+    try{ setCloudStatus('Salvando…'); await cloudCall('push',{current:activeKey,months,savedAt:Date.now()}); setCloudStatus('Salvo ✓ '+hhmm()); }
+    catch(e){ setCloudStatus('Sem conexão — salvo no aparelho'); }
+  }
+  async function cloudPull(){
+    if(!cloudCode) return;
+    try{ setCloudStatus('Sincronizando…'); const r=await cloudCall('pull'); if(r&&r.data&&r.data.months){ mergeCloud(r.data.months); setMonth(activeKey); } setCloudStatus('Sincronizado ✓ '+hhmm()); }
+    catch(e){ setCloudStatus('Sem conexão — usando dados do aparelho'); }
+  }
+  function mergeCloud(cm){ Object.keys(cm).forEach(k=>{ if(!months[k] || (cm[k]._u||0)>(months[k]._u||0)) months[k]=cm[k]; }); }
+  function renderCloudUI(){
+    const on=!!cloudCode;
+    $('#cloud-off').hidden=on; $('#cloud-on-box').hidden=!on;
+    if(on) $('#cloud-code').value=cloudCode;
+  }
+  $('#cloud-on').addEventListener('click', ()=>{ cloudCode=genCode(); try{ localStorage.setItem(CKEY,cloudCode); }catch(e){} renderCloudUI(); setCloudStatus('Ativando…'); cloudPush(); });
+  $('#cloud-restore-btn').addEventListener('click', ()=>{
+    const c=($('#cloud-restore').value||'').trim(); const msg=$('#cloud-msg');
+    if(c.length<16){ msg.textContent='Código inválido (muito curto).'; return; }
+    msg.textContent=''; cloudCode=c; try{ localStorage.setItem(CKEY,cloudCode); }catch(e){} renderCloudUI(); cloudPull();
+  });
+  $('#cloud-copy').addEventListener('click', ()=>{
+    const i=$('#cloud-code'); try{ navigator.clipboard.writeText(cloudCode).then(()=>setCloudStatus('Código copiado ✓'),()=>{ i.select(); }); }catch(e){ i.select(); }
+  });
+  $('#cloud-off-btn').addEventListener('click', ()=>{ cloudCode=null; try{ localStorage.removeItem(CKEY); }catch(e){} renderCloudUI(); });
 
   $('#theme').addEventListener('click', ()=>{
     const cur=document.documentElement.getAttribute('data-theme');
@@ -790,11 +852,13 @@
   });
   try{ const t=localStorage.getItem(KEY+'_theme'); if(t) document.documentElement.setAttribute('data-theme',t); }catch(e){}
 
-  document.addEventListener('input', e=>{ if(e.target.matches('input') && !e.target.closest('#dayForm')) refresh(); });
+  document.addEventListener('input', e=>{ if(e.target.matches('input') && !e.target.closest('#dayForm') && !e.target.closest('#cloud-card')) refresh(); });
 
   /* ---------- init ---------- */
   loadStore();
   setMonth(activeKey);
+  renderCloudUI();
+  if(cloudCode) cloudPull();
   const startTab=(location.hash||'').replace('#','');
   switchTab(TABS.includes(startTab)?startTab:'hoje');
 </script>
