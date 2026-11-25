@@ -535,8 +535,8 @@
   }
 
   /* ---------- barra de mês ---------- */
-  function setMonth(k){
-    writeActive();
+  function setMonth(k){ writeActive(); renderMonth(k); }
+  function renderMonth(k){
     activeKey=k; const {y,m}=parseKey(k); aY=y; aM=m; aDays=new Date(y,m+1,0).getDate(); aFirst=new Date(y,m,1).getDay();
     cmpMonth = k<currentKey?-1 : k>currentKey?1 : 0;
     const st=getMonth(k);
@@ -848,7 +848,7 @@
   }
   async function cloudPull(){
     if(!cloudCode) return;
-    try{ setCloudStatus('Sincronizando…'); const r=await cloudCall('pull'); if(r&&r.data&&r.data.months){ mergeCloud(r.data.months); setMonth(activeKey); } setCloudStatus('Sincronizado ✓ '+hhmm()); }
+    try{ setCloudStatus('Sincronizando…'); const r=await cloudCall('pull'); if(r&&r.data&&r.data.months){ mergeCloud(r.data.months); renderMonth(activeKey); } setCloudStatus('Sincronizado ✓ '+hhmm()); }
     catch(e){ setCloudStatus('Sem conexão — usando dados do aparelho'); }
   }
   function mergeCloud(cm){ Object.keys(cm).forEach(k=>{ if(!months[k] || (cm[k]._u||0)>(months[k]._u||0)) months[k]=cm[k]; }); }
