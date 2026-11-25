@@ -164,6 +164,14 @@
   .cmp .pl{color:var(--muted);font-variant-numeric:tabular-nums}
   .cmp .rl{font-weight:700;font-variant-numeric:tabular-nums}
   .cmp .rl.good{color:var(--accent)} .cmp .rl.bad{color:var(--danger)} .cmp .rl.dash{color:var(--faint);font-weight:500}
+  .ct small{font-weight:400;text-transform:none;letter-spacing:0;color:var(--faint);font-family:var(--body);font-size:.78rem;margin-left:2px}
+  .cx{display:flex;flex-direction:column}
+  .cx-row{display:flex;justify-content:space-between;align-items:baseline;padding:9px 2px;font-size:.9rem}
+  .cx-row+.cx-row{border-top:1px solid var(--border)}
+  .cx-row .cx-k{color:var(--muted)}
+  .cx-row b{font-variant-numeric:tabular-nums;font-weight:600}
+  .cx-row.total b{color:var(--accent);font-family:var(--display);font-size:1.2rem}
+  .cx-row.total .cx-k{color:var(--fg);font-weight:600}
 
   .cal-count{display:flex;justify-content:space-between;align-items:center;margin-top:13px;font-size:.84rem;color:var(--muted);flex-wrap:wrap;gap:6px}
   .cal-count b{color:var(--fg);font-variant-numeric:tabular-nums}
@@ -353,6 +361,17 @@
         </div>
       </div>
 
+      <div class="card">
+        <p class="ct"><span class="n">▦</span> Caixinhas do mês <small>onde vai o que você faturou</small></p>
+        <div class="cx">
+          <div class="cx-row"><span class="cx-k">⛽ Combustível (já gasto)</span><b id="cx-comb">—</b></div>
+          <div class="cx-row"><span class="cx-k">🔧 Guardar p/ manutenção</span><b id="cx-manut">—</b></div>
+          <div class="cx-row"><span class="cx-k">📄 Guardar p/ custos fixos</span><b id="cx-fix">—</b></div>
+          <div class="cx-row total"><span class="cx-k">💰 Lucro no bolso</span><b id="cx-lucro">—</b></div>
+        </div>
+        <span class="hint" id="cx-hint" style="display:block;margin-top:9px"></span>
+      </div>
+
       <div class="card ins">
         <p class="ct" style="margin-bottom:10px"><span class="n">◎</span> Como você está</p>
         <span class="pill neutral" id="status"><span class="d"></span>—</span>
@@ -489,16 +508,22 @@
     if(activeDay==null){ edReadout.hidden=true; return; }
     const dd=dayData[activeDay]||{}, f=dd.f||0, km=dd.km||0, h=dd.h||0, pl=dd.pl||0;
     if(!(f>0)){ edReadout.hidden=true; return; }
-    const consumo=val('consumo'), manutKm=manutPerKm(), totalDias=selected.size||1;
+    const consumo=val('consumo'), preco=val('preco'), ganho=val('ganho'), manutKm=manutPerKm();
+    const combKm=consumo>0?preco/consumo:0, totalDias=selected.size||1;
     const fixos=[...document.querySelectorAll('.fixo')].reduce((s,e)=>s+(parseFloat((e.value||'').replace(',','.'))||0),0);
-    const litros=consumo>0?km/consumo:0, comb=litros*(pl||val('preco'));
-    const lucro=f-(comb+manutKm*km+fixos/totalDias);
-    const parts=[];
-    if(km>0) parts.push('<b>'+brl(f/km)+'/km</b>');
-    if(h>0) parts.push('<b>'+brl(f/h)+'/h</b>');
-    if(km>0) parts.push('combustível <b>'+brl0(comb)+'</b>');
-    parts.push('lucro ~<b>'+brl0(lucro)+'</b>');
-    edReadout.innerHTML='Nesse dia: '+parts.join(' · ');
+    let comb, manut;
+    if(km>0){ comb=(consumo>0?km/consumo:0)*(pl||preco); manut=manutKm*km; }
+    else { comb=ganho>0?f*(combKm/ganho):0; manut=ganho>0?f*(manutKm/ganho):0; }
+    const fixoDia=fixos/totalDias, lucro=f-comb-manut-fixoDia;
+    const top=[]; if(km>0) top.push('<b>'+brl(f/km)+'</b>/km'); if(h>0) top.push('<b>'+brl(f/h)+'</b>/h'); if(km>0&&consumo>0) top.push('<b>'+num1(consumo)+'</b> km/L');
+    edReadout.innerHTML='<div style="font-family:var(--display);font-weight:600;margin-bottom:8px">Resumo do dia</div>'+
+      (top.length?'<div class="hint" style="margin:-4px 0 8px">'+top.join(' · ')+'</div>':'')+
+      '<div class="cx">'+
+      '<div class="cx-row"><span class="cx-k">⛽ Combustível</span><b>'+brl0(comb)+'</b></div>'+
+      '<div class="cx-row"><span class="cx-k">🔧 Guardar manutenção</span><b>'+brl0(manut)+'</b></div>'+
+      '<div class="cx-row"><span class="cx-k">📄 Guardar custos fixos</span><b>'+brl0(fixoDia)+'</b></div>'+
+      '<div class="cx-row total"><span class="cx-k">💰 Sobra do dia</span><b>'+brl0(lucro)+'</b></div>'+
+      '</div>';
     edReadout.hidden=false;
   }
 
@@ -579,24 +604,28 @@
     $('#d-fatmes').textContent=brl0(fatMes);
     $('#d-retdia').textContent=brl0(retDia);
 
-    // lucro líquido real acumulado
-    const fracNet = ganho>0? margem/ganho : 0;
+    // percorre os dias registrados: médias reais + caixinhas (combustível, manutenção, fixos, lucro)
+    let skm=0, sh=0, sLit=0, sLitPreco=0, dkm=0, sfKm=0, sfH=0, totalComb=0, totalManut=0;
+    Object.keys(dayData).forEach(k=>{ const o=dayData[k]; if(!(o&&o.f>0)) return;
+      const km=o.km||0;
+      if((o.h||0)>0){ sh+=o.h; sfH+=o.f; }
+      let comb, manut;
+      if(km>0){ skm+=km; dkm++; sfKm+=o.f; const p=(o.pl>0?o.pl:preco); const lit=consumo>0?km/consumo:0;
+        sLit+=lit; sLitPreco+=lit*p; comb=lit*p; manut=manutKm*km; }
+      else { comb=ganho>0?o.f*(combKm/ganho):0; manut=ganho>0?o.f*(manutKm/ganho):0; }
+      totalComb+=comb; totalManut+=manut;
+    });
     const fixosInc = totalDias>0? fixos*Math.min(1,diasTrab/totalDias) : 0;
-    const lucroReal = faturado*fracNet - fixosInc;
+    const lucroReal = faturado - totalComb - totalManut - fixosInc;
     updateProgress(faturado, fatMes, lucroReal, meta);
 
-    // médias REAIS a partir dos registros diários
-    let sf=0, skm=0, sh=0, sLit=0, sLitPreco=0, dkm=0;
-    Object.keys(dayData).forEach(k=>{ const o=dayData[k]; if(!(o&&o.f>0)) return;
-      sf+=o.f; sh+=(o.h||0);
-      if(o.km>0){ skm+=o.km; dkm++; const lit=consumo>0?o.km/consumo:0; const p=(o.pl>0?o.pl:preco); sLit+=lit; sLitPreco+=lit*p; }
-    });
-    const ganhoKmReal=skm>0?sf/skm:NaN;
-    const ganhoHrReal=sh>0?sf/sh:NaN;
+    const ganhoKmReal=skm>0?sfKm/skm:NaN;
+    const ganhoHrReal=sh>0?sfH/sh:NaN;
     const precoReal=sLit>0?sLitPreco/sLit:NaN;
     const kmDiaReal=dkm>0?skm/dkm:NaN;
-    const fatDiaReal=diasTrab>0?sf/diasTrab:NaN;
+    const fatDiaReal=diasTrab>0?faturado/diasTrab:NaN;
     renderCompare({ganho,rhora,preco,kmDia,fatDia,ganhoKmReal,ganhoHrReal,precoReal,kmDiaReal,fatDiaReal});
+    renderCaixinhas({comb:totalComb,manut:totalManut,fix:fixosInc,lucro:lucroReal,dias:diasTrab,fixDia:(totalDias>0?fixos/totalDias:0)});
 
     // insights
     buildInsights({meta,fatMes,fatDia,rhora,horas,faturado,diasTrab,horasTrab,diasRest,totalDias,lucroReal,fracNet,ganho,ganhoKmReal,ganhoHrReal});
@@ -615,6 +644,15 @@
   }
 
   function setStatus(kind,label){ const s=$('#status'); s.className='pill '+kind; s.innerHTML='<span class="d"></span>'+label; }
+
+  function renderCaixinhas(c){
+    $('#cx-comb').textContent=brl0(c.comb);
+    $('#cx-manut').textContent=brl0(c.manut);
+    $('#cx-fix').textContent=brl0(c.fix);
+    $('#cx-lucro').textContent=brl0(c.lucro);
+    if(c.dias>0) $('#cx-hint').innerHTML='Por dia trabalhado, separe em média <b>'+brl0(c.manut/c.dias)+'</b> p/ manutenção e <b>'+brl0(c.fixDia)+'</b> p/ custos fixos. O resto é seu.';
+    else $('#cx-hint').textContent='Registre os dias no calendário (km, combustível, faturamento) pra ver quanto guardar em cada caixinha.';
+  }
 
   function setCmp(idp, idr, plano, real, fmt, betterHigher){
     $('#'+idp).textContent=fmt(plano);
